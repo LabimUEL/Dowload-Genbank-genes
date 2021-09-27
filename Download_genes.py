@@ -32,11 +32,14 @@ for l in lista:
         nav.find_element_by_xpath('//*[@id="search"]').click() ### coloca o nome do gene na barra de pesquisa
         ### determina na categoria Organisms o termo bacteria
         try:
-            nav.find_element_by_xpath('//*[@id="ui-ncbigrid-7"]/tbody/tr[1]/td[1]/div[2]/a/span').click() ### Entra no primeiro gene encontrado da lista de resultados
-            acces = nav.find_element_by_xpath('//*[@id="single-gen-accession"]').get_attribute('data-accession')
-        except NoSuchElementException:
+            nav.find_element_by_xpath('//*[@id="ui-ncbigrid-7"]/tbody/tr[1]/td[1]/div[2]/a/span').click()
+            ### Entra no primeiro gene encontrado da lista de resultados 
+        except NoSuchElementException as e:
+            print(e)
             continue
-        ### Este bloco faz com que o código reinicie apos um erro neste passo
+            nav.close()
+        else:
+            acces = nav.find_element_by_xpath('//*[@id="single-gen-accession"]').get_attribute('data-accession')
         num = re.search("[A-Z]+[_][A-Z0-9]*[^.]", acces).group(0)
         quote = "\""+num+"\""
         ### Obtem o numero de acesso da bacteria
