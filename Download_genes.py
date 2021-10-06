@@ -1,10 +1,6 @@
 import re
 ### Expressao regular para obter numero de acesso do genoma de onde o gene foi tirado
 import selenium
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import NoSuchElementException
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -15,11 +11,10 @@ from subprocess import call
 import time
 import os
 
-
 ### Acessar lista de genes
 ### passar sobre todos em cada linha
 
-lista = open('genes_teste.txt')
+lista = open('genes_artigo_Doc2.txt')
 
 for l in lista:
     if not l.lstrip().startswith('#'):
@@ -36,19 +31,30 @@ for l in lista:
             ### Entra no primeiro gene encontrado da lista de resultados 
         except NoSuchElementException as e:
             print(e)
-            continue
+            print("Gene not found!!", l_strip)
             nav.close()
+            continue            
         else:
             acces = nav.find_element_by_xpath('//*[@id="single-gen-accession"]').get_attribute('data-accession')
+        ### Este bloco faz com que o codigo reinicie apos um erro neste passo
         num = re.search("[A-Z]+[_][A-Z0-9]*[^.]", acces).group(0)
         quote = "\""+num+"\""
         ### Obtem o numero de acesso da bacteria
         ### Coloca o numero de acesso na variavel acces
         ### Regex retira as outras infos do valor em acces e atribui ao objeto "num"
         ### Adiciona aspas para encaixar no meio do xpath necessário para acessar a pagina de download
-        nav.find_element_by_xpath("//*[@id="+quote+"]/div/p/a[2]").click() ### Entra na pagina FASTA Nucleotides para baixar a sequencia 
-        nav.find_element_by_xpath('//*[@id="seqsendto"]/a').click()
-        time.sleep(2)
+        nav.find_element_by_xpath("//*[@id="+quote+"]/div/p/a[2]").click()
+        ### Entra na pagina FASTA Nucleotides para baixar a sequencia 
+        try:
+            nav.find_element_by_xpath('//*[@id="seqsendto"]/a').click()
+        except NoSuchElementException as e:
+            print(e)
+            print("Impossible to download the gene", l_strip)
+            nav.close()
+            continue            
+        else:
+            time.sleep(2)
+        #time.sleep(2)
         nav.find_element_by_xpath('//*[@id="submenu_complete_rec"]/fieldset/ul/li[1]/label').click()
         time.sleep(2)
         nav.find_element_by_xpath('//*[@id="file_format"]/option[4]').click()
@@ -63,7 +69,7 @@ for l in lista:
                 spp = re.search("[A-z]+[ ][a-z]+", str(corte)).group(0)
                 spp_espaco = spp.replace(" ", "_")
                 print(spp_espaco)            
-                novo_nome = l_strip+spp_espaco
+                novo_nome = l_strip+"_"+spp_espaco
         ### abre o arquivo recem baixado via python
         ### retira o termo ", complete sequence" da string para não atrapalhar o regex
         ### obtem o nome da bacteria por regex, retira os espaços e substitui por "_"
@@ -74,3 +80,4 @@ for l in lista:
         call(cmd, shell=True)
         ### Renomeia o arquivo com o nome do gene e o nome da bacteria e move para uma pasta especifica
         
+    
