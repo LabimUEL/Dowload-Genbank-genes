@@ -2,7 +2,7 @@ import argparse
 import pandas as pd
 
 
-from settings import cols2use, ASSEMBLY_SUM, ASSEMBLY_LEVELS
+from settings import cols2use, ASSEMBLY_SUM, ASSEMBLY_LEVELS, HEADER
 
 
 def read_assembly_summary(Path2file: str) -> pd.DataFrame:
@@ -11,8 +11,8 @@ def read_assembly_summary(Path2file: str) -> pd.DataFrame:
     return df
 
 # Primeiro filtro é por espécie, argumento vem do argparse
-def species_filter(all_species_df: pd.DataFrame) -> pd.DataFrame:
-    x = all_species_df.loc[df["organism_name"] == "Bacillus velezensis"]
+def species_filter(all_species_df: pd.DataFrame, sp_name: str) -> pd.DataFrame:
+    x = all_species_df.loc[df["organism_name"] == sp_name]
     #print(x)
     return x
 
@@ -48,13 +48,36 @@ if __name__ == '__main__':
 #                upload_data_filter(assemblies, "2020/01/01")
 
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-sp', '--species', help="Genus and species from wanted organism.")
-    parser.add_argument('-l', '--level', help="Assemble level to remove from download list.")
-    parser.add_argument('-d', '--date', help="Date to filter downloads, use YY/MM/DD pattern.")
+    parser = argparse.ArgumentParser(description=HEADER, formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('species', help="Genus and species from wanted organism.")
+    parser.add_argument('-l', '--level', choices=ASSEMBLY_LEVELS, help="Assembly level to remove from download list.")
+    parser.add_argument('-d', '--date', help="Date to filter downloads, use YYYY/MM/DD pattern.")
     args = parser.parse_args()
     print(args)
+    level = args.level
+    sp_ = args.species
+    data = args.date
+    
+    df = read_assembly_summary(ASSEMBLY_SUM)
 
+    species = species_filter(df, sp_)
+
+    if level and isinstance(data, None):
+        ASSEMBLY_LEVELS.remove(level)
+        assemblies = assembly_level_filter(species)
+        print(assemblies)
+    elif data and isinstance(level, None):
+        date_filt = upload_data_filter(species, "2020/01/01")
+        print(date_filt)
+    elif level and data:
+        ASSEMBLY_LEVELS.remove(args.assembly)
+        assemblies = assembly_level_filter(species)
+        fully_filt = upload_data_filter(assemblies, "2020/01/01")
+        print(fully_filt)
+    else:
+        print(species)
+        
+    
 
     #df = read_assembly_summary(ASSEMBLY_SUM)
     #species = species_filter(df)
